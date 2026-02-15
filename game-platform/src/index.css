@@ -1,0 +1,40 @@
+@import "tailwindcss";
+/* 🌈 Animated Gradient Background */ 
+
+.animated-gradient {
+  background: linear-gradient(
+    -45deg,
+    #05090f,
+    #0b1c24,
+    #0f2024,
+    #132f3b,
+    #0f2027
+  );
+  background-size: 400% 400%;
+  animation: gradientFlow 12s ease infinite;
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.15s ease-out;
+}
+
+html, body {
+  overflow-x: hidden;
+}
