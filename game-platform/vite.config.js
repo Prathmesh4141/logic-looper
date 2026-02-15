@@ -9,6 +9,12 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+
+      // ✅ prevents localhost caching issues
+      devOptions: {
+        enabled: false,
+      },
+
       manifest: {
         name: 'Logic Looper',
         short_name: 'LogicLooper',
