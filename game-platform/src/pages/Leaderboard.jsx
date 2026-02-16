@@ -8,7 +8,7 @@ export default function Leaderboard() {
 
   const loadLeaderboard = async () => {
     try {
-      const res = await fetch("http://localhost:5000/leaderboard");
+      const res = await fetch("https://logic-looper-api.onrender.com/leaderboard");
       const data = await res.json();
       setPlayers(data);
       setLoading(false);

@@ -7,7 +7,7 @@ export default function Profile() {
   const user = auth.currentUser;
 
   useEffect(() => {
-    fetch(`http://localhost:5000/user-history/${user.displayName}`)
+    fetch(`https://logic-looper-api.onrender.com/user-history/${user.displayName}`)
       .then((res) => res.json())
       .then((data) => setHistory(data));
   }, []);

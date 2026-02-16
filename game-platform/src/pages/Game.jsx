@@ -93,7 +93,7 @@ export default function Game() {
         ? 45 - timeLeft
         : 30 - timeLeft;
 
-    await fetch("http://localhost:5000/score", {
+    await fetch("https://logic-looper-api.onrender.com/score", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -116,7 +116,8 @@ export default function Game() {
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:5000/champion")
+    fetch("https://logic-looper-api.onrender.com/champion")
+
       .then((res) => res.json())
       .then((data) => setChampion(data));
   }, []);
