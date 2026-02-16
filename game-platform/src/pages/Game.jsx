@@ -34,7 +34,9 @@ export default function Game() {
   const [mode, setMode] = useState("daily");
 
   const userName = auth.currentUser?.displayName || "Guest";
-  const [streak, setStreak] = useState(getStreak());
+  const userId = auth.currentUser?.uid;
+
+  const [streak, setStreak] = useState(() => getStreak(userId));
 
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState(
@@ -126,15 +128,17 @@ export default function Game() {
     if (timeLeft <= 0 && !gameOver) {
       setGameOver(true);
       setGameStarted(false);
-
+    
       saveScore();
       window.dispatchEvent(new Event("scoreUpdated"));
-
+    
       markTodayPlayed();
-      const newStreak = updateStreak();
+    
+      const newStreak = updateStreak(userId);
       setStreak(newStreak);
-
+    
       saveActivity({
+        userId,
         date: new Date().toISOString().slice(0, 10),
         solved: true,
         score,
@@ -142,10 +146,12 @@ export default function Game() {
         difficulty,
         synced: false,
       });
+    
       markTodayCompleted();
-
+    
       return;
     }
+    
 
     const timer = setInterval(() => {
       setTimeLeft((t) => t - 1);

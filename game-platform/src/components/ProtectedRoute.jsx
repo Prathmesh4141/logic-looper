@@ -4,13 +4,12 @@ import { useAuth } from "../context/AuthContext";
 export default function ProtectedRoute({ children }) {
   const { user } = useAuth();
 
-  if (user === undefined) {
-    return (
-      <div className="h-screen flex items-center justify-center text-white">
-        Loading...
-      </div>
-    );
-  }
+  // ⏳ wait for firebase to load
+  if (user === undefined) return null;
 
-  return user ? children : <Navigate to="/" replace />;
+  // ❌ not logged in
+  if (!user) return <Navigate to="/" replace />;
+
+  // ✅ logged in
+  return children;
 }

@@ -8,32 +8,35 @@ function yesterdayISO() {
   return d.toISOString().slice(0, 10);
 }
 
-export function updateStreak() {
+export function updateStreak(userId) {
+  if (!userId) return 0;
+
   const today = todayISO();
   const yesterday = yesterdayISO();
 
-  const lastPlayed = localStorage.getItem("lastPlayed");
-  let streak = Number(localStorage.getItem("streak") || 0);
+  const lastPlayedKey = `lastPlayed_${userId}`;
+  const streakKey = `streak_${userId}`;
+
+  const lastPlayed = localStorage.getItem(lastPlayedKey);
+  let streak = Number(localStorage.getItem(streakKey) || 0);
 
   if (!lastPlayed) {
     streak = 1;
-  }
-  else if (lastPlayed === today) {
+  } else if (lastPlayed === today) {
     return streak;
-  }
-  else if (lastPlayed === yesterday) {
+  } else if (lastPlayed === yesterday) {
     streak += 1;
-  }
-  else {
+  } else {
     streak = 1;
   }
 
-  localStorage.setItem("lastPlayed", today);
-  localStorage.setItem("streak", streak);
+  localStorage.setItem(lastPlayedKey, today);
+  localStorage.setItem(streakKey, streak);
 
   return streak;
 }
 
-export function getStreak() {
-  return Number(localStorage.getItem("streak") || 0);
+export function getStreak(userId) {
+  if (!userId) return 0;
+  return Number(localStorage.getItem(`streak_${userId}`) || 0);
 }

@@ -2,42 +2,44 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, provider } from "../services/firebase";
 import {
-  signInWithRedirect ,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
+
 import { motion } from "framer-motion";
-import { FaBrain } from "react-icons/fa";
-import { getRedirectResult } from "firebase/auth";
+import { FaBrain } from "react-icons/fa"; 
 import { useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
 
 export default function Login() {
   const navigate = useNavigate();
-
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
+  
+  useEffect(() => {
+    if (user) {
+      navigate("/game");
+    }
+  }, [user]);
+  
   const googleLogin = async () => {
     try {
-      await signInWithRedirect(auth, provider);
-
-      navigate("/game");
-    } catch {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error(err);
       setError("Google login failed. Try again.");
     }
   };
-
-  useEffect(() => {
-    getRedirectResult(auth).then((result) => {
-      if (result?.user) {
-        navigate("/game");
-      }
-    });
-  }, []);
+  
+  
+  
+   
   
   const signup = async () => {
     setError("");
@@ -79,6 +81,10 @@ export default function Login() {
       }
     }
   };
+
+  useEffect(() => {
+    if (user) navigate("/game");
+  }, [user]);
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#0f2027] via-[#203a43] to-[#2c5364]">
