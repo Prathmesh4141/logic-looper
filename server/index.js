@@ -26,39 +26,36 @@ const pool = new Pool({
   },
 });
 
-// TEST ROUTE
+ 
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
 
-// SAVE SCORE
+ 
 app.post("/score", async (req, res) => {
   const { user, score, timeTaken, difficulty, date, hash } = req.body;
 
-  // 1️⃣ Validate date
+ 
   const today = new Date().toISOString().slice(0, 10);
   if (date !== today) {
     return res.status(400).send("Invalid date");
   }
 
-  // 2️⃣ Validate time
+  
   if (timeTaken < 1 || timeTaken > 120) {
     return res.status(400).send("Invalid completion time");
   }
 
-  // 3️⃣ Validate score range
-  if (score < 0 || score > 10000) {
+   if (score < 0 || score > 10000) {
     return res.status(400).send("Invalid score");
   }
 
-  // 4️⃣ Validate hash (anti-tampering)
-  const expectedHash = createSeedHash(date);
+   const expectedHash = createSeedHash(date);
   if (hash !== expectedHash) {
     return res.status(400).send("Invalid puzzle seed");
   }
 
-  // 5️⃣ Save score safely
-  // save session history
+ 
 await pool.query(
   `INSERT INTO sessions (username, score, time_taken, difficulty)
    VALUES ($1, $2, $3, $4)`,
@@ -78,8 +75,7 @@ await pool.query(
 });
 
 
-// LEADERBOARD
-app.get("/leaderboard", async (req, res) => {
+ app.get("/leaderboard", async (req, res) => {
   try {
     const result = await pool.query(
       "SELECT username, score FROM scores ORDER BY score DESC LIMIT 3"
@@ -93,8 +89,7 @@ app.get("/leaderboard", async (req, res) => {
   }
 });
 
-// 🏆 Champion Route
-app.get("/champion", async (req, res) => {
+ app.get("/champion", async (req, res) => {
   const result = await pool.query(
     `SELECT username, score
      FROM scores
