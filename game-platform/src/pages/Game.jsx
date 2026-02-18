@@ -19,6 +19,8 @@ import { markTodayCompleted } from "../game/dailyUnlock";
 import DailyAccess from "../components/DailyAccess";
 import { getTimeUntilMidnight } from "../game/unlockTimer";
 import { isCompleted } from "../game/dailyUnlock";
+import { calculateAdaptiveDifficulty } from "../game/adaptiveDifficulty";
+
 
 export default function Game() {
   const navigate = useNavigate();
@@ -42,6 +44,9 @@ export default function Game() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
+
+  const [wrongAttempts, setWrongAttempts] = useState(0);
+const [adaptiveMessage, setAdaptiveMessage] = useState("");
 
   const today = new Date().toISOString().slice(0, 10);
   const todayDone = isCompleted(today);
@@ -130,6 +135,16 @@ export default function Game() {
       setGameOver(true);
       setGameStarted(false);
     
+      const userId = auth.currentUser?.uid;
+    
+      // ✅ define timeTaken correctly
+      const timeTaken =
+        mode === "blitz"
+          ? 60
+          : mode === "challenge"
+          ? 45
+          : 30;
+    
       saveScore();
       window.dispatchEvent(new Event("scoreUpdated"));
     
@@ -141,17 +156,19 @@ export default function Game() {
       saveActivity({
         userId,
         date: new Date().toISOString().slice(0, 10),
-        solved: true,
+        attempts: correctStreak + 1,
+        solved: correctStreak > 0,
+        wrong: correctStreak === 0,
         score,
-        timeTaken: mode === "blitz" ? 60 : mode === "challenge" ? 45 : 30,
+        timeTaken,
         difficulty,
         synced: false,
       });
     
       markTodayCompleted();
-    
       return;
     }
+    
     
 
     const timer = setInterval(() => {
@@ -163,11 +180,11 @@ export default function Game() {
 
   const submit = () => {
     if (gameOver) return;
-
+  
     const isCorrect =
       String(input).trim().toLowerCase() ===
       String(puzzle.answer).trim().toLowerCase();
-
+  
     if (isCorrect) {
       const points = calculateScore({
         difficulty,
@@ -176,13 +193,18 @@ export default function Game() {
         streak: correctStreak,
         correct: true,
       });
-
+  
       const newScore = score + points;
-
+  
       setScore(newScore);
       setLastPoints(points);
       setCorrectStreak((s) => s + 1);
-
+      setWrongAttempts(0);
+  
+      if (correctStreak >= 2) {
+        setAdaptiveMessage("🔥 You're on fire!");
+      }
+  
       if (champion && newScore > champion.score) {
         confetti({
           particleCount: 200,
@@ -192,15 +214,32 @@ export default function Game() {
       }
     } else {
       setCorrectStreak(0);
+      setWrongAttempts((w) => w + 1);
+      setAdaptiveMessage("💡 Keep trying, you’ve got this!");
     }
-
+  
+    // 🎯 Adaptive difficulty adjustment
+    const nextDifficulty = calculateAdaptiveDifficulty({
+      currentDifficulty: difficulty,
+      correctStreak,
+      wrongAttempts,
+      timeLeft,
+      hintsUsed,
+    });
+  
+    if (nextDifficulty > difficulty) {
+      setAdaptiveMessage(`🔥 Difficulty increased to Level ${nextDifficulty}`);
+    } else if (nextDifficulty < difficulty) {
+      setAdaptiveMessage("🧩 Difficulty adjusted to help you");
+    }
+  
     setHintsUsed(0);
     setHintText("");
     setInput("");
-
-    const nextIndex = questionIndex + 1;
-    setQuestionIndex(nextIndex);
+  
+    setQuestionIndex((i) => i + 1);
   };
+  
 
   const restart = () => {
     setScore(0);
@@ -335,6 +374,12 @@ export default function Game() {
             +{lastPoints} pts
           </div>
         )}
+        {adaptiveMessage && (
+  <div className="text-center text-indigo-300 mb-3 animate-pulse">
+    {adaptiveMessage}
+  </div>
+)}
+
 
         {/* GAME AREA */}
         {!gameOver ? (
@@ -407,6 +452,13 @@ export default function Game() {
 
       {/* NAVIGATION */}
       <div className="flex gap-4 mt-6">
+      <button
+  onClick={() => navigate("/dashboard")}
+  className="bg-purple-600 hover:bg-purple-700 px-5 py-3 rounded-lg shadow-lg transition transform hover:scale-105"
+>
+  📊 Dashboard
+</button>
+
         <button
           onClick={() => navigate("/leaderboard")}
           className="bg-yellow-500 hover:bg-yellow-600 px-5 py-3 rounded-lg shadow-lg transition transform hover:scale-105"

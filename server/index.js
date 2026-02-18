@@ -58,13 +58,21 @@ app.post("/score", async (req, res) => {
   }
 
   // 5️⃣ Save score safely
-  await pool.query(
-    `INSERT INTO scores (username, score)
-     VALUES ($1, $2)
-     ON CONFLICT (username)
-     DO UPDATE SET score = GREATEST(scores.score, EXCLUDED.score);`,
-    [user, score]
-  );
+  // save session history
+await pool.query(
+  `INSERT INTO sessions (username, score, time_taken, difficulty)
+   VALUES ($1, $2, $3, $4)`,
+  [user, score, timeTaken, difficulty]
+);
+
+// update leaderboard (best score)
+await pool.query(
+  `INSERT INTO scores (username, score)
+   VALUES ($1, $2)
+   ON CONFLICT (username)
+   DO UPDATE SET score = GREATEST(scores.score, EXCLUDED.score);`,
+  [user, score]
+);
 
   res.send("Score saved securely");
 });
@@ -111,7 +119,7 @@ app.get("/user-history/:name", async (req, res) => {
 
     const result = await pool.query(
       `SELECT score, created_at
-       FROM scores
+       FROM sessions
        WHERE username = $1
        ORDER BY created_at DESC
        LIMIT 10`,
