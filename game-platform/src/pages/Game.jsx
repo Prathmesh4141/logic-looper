@@ -20,6 +20,9 @@ import DailyAccess from "../components/DailyAccess";
 import { getTimeUntilMidnight } from "../game/unlockTimer";
 import { isCompleted } from "../game/dailyUnlock";
 import { calculateAdaptiveDifficulty } from "../game/adaptiveDifficulty";
+import useSyncStatus from "../hooks/useSyncStatus";
+import SyncIndicator from "../components/SyncIndicator";
+
 
 
 export default function Game() {
@@ -34,6 +37,8 @@ export default function Game() {
   const [hintsUsed, setHintsUsed] = useState(0);
 
   const [mode, setMode] = useState("daily");
+  const [syncStatus, setSyncStatus] = useSyncStatus();
+
 
   const userName = auth.currentUser?.displayName || "Guest";
   const userId = auth.currentUser?.uid;
@@ -87,30 +92,45 @@ const [adaptiveMessage, setAdaptiveMessage] = useState("");
   }, []);
 
   const saveScore = async () => {
-    const date = new Date().toISOString().slice(0, 10);
-
-    const hash = SHA256(date + "logic-looper-secret").toString();
-
-    const timeTaken =
-      mode === "blitz"
-        ? 60 - timeLeft
-        : mode === "challenge"
-        ? 45 - timeLeft
-        : 30 - timeLeft;
-
-    await fetch("https://logic-looper-api.onrender.com/score", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user: userName,
-        score,
-        difficulty,
-        timeTaken,
-        date,
-        hash,
-      }),
-    });
+    try {
+      // 🔵 syncing started
+      setSyncStatus("syncing");
+  
+      const date = new Date().toISOString().slice(0, 10);
+  
+      const hash = SHA256(date + "logic-looper-secret").toString();
+  
+      const timeTaken =
+        mode === "blitz"
+          ? 60 - timeLeft
+          : mode === "challenge"
+          ? 45 - timeLeft
+          : 30 - timeLeft;
+  
+      await fetch("https://logic-looper-api.onrender.com/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user: userName,
+          score,
+          difficulty,
+          timeTaken,
+          date,
+          hash,
+        }),
+      });
+  
+      // 🟢 sync success
+      setSyncStatus("online");
+  
+    } catch (err) {
+      console.error(err);
+  
+      // 🔴 sync failed
+      setSyncStatus("failed");
+    }
   };
+  
 
   useEffect(() => {
     async function load() {
@@ -152,6 +172,11 @@ const [adaptiveMessage, setAdaptiveMessage] = useState("");
     
       const newStreak = updateStreak(userId);
       setStreak(newStreak);
+      // 🟡 offline save detection
+if (!navigator.onLine) {
+  setSyncStatus("offline");
+}
+
     
       saveActivity({
         userId,
@@ -294,6 +319,10 @@ const [adaptiveMessage, setAdaptiveMessage] = useState("");
       >
         Logout 🚪
       </button>
+      <div className="absolute top-6 left-6">
+  <SyncIndicator status={syncStatus} />
+</div>
+
 
       <div className="text-center mb-6">
         <h1 className="text-5xl font-extrabold tracking-wide drop-shadow-lg">
